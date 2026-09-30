@@ -1,78 +1,30 @@
 import { translate, profiles } from "./translator.js";
+import { backend } from "./backend.js";
 
-const app=document.querySelector("#app");
-const state=JSON.parse(localStorage.getItem("spouse-speak-state")||"null")||{
-  screen:"welcome",
-  me:{name:"Me",style:"direct"},
-  spouse:{name:"My Spouse",style:"romantic"},
-  humor:2,
-  messages:[]
-};
+const root=document.querySelector("#app");
+const defaults={screen:"welcome",me:{id:"me",name:"Me",style:"direct"},spouse:{id:"spouse",name:"My Spouse",style:"romantic"},humor:2,pair:null,messages:[]};
+const state=Object.assign(defaults,JSON.parse(localStorage.getItem("spouse-speak-state")||"null")||{});
 const save=()=>localStorage.setItem("spouse-speak-state",JSON.stringify(state));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 
-function logo(){return `<div class="brand"><div class="mark"><span>☺</span><span>☺</span><b>♥</b></div><h1>Spouse Speak</h1><p>Same words. Happier marriages.</p></div>`}
-
-function welcome(){
-  return `<section class="phone welcome">${logo()}
-    <div class="hero-couple"><div>📱🙂</div><span>♥</span><div>😊📱</div></div>
-    <div class="pitch">
-      <p>💗 Turns long stories into clear updates <strong>(and vice versa)</strong>.</p>
-      <p>💬 Keeps the meaning, changes the delivery.</p>
-      <p>😄 Built for couples who love each other but occasionally require subtitles.</p>
-    </div>
-    <button class="primary" data-go="setup">Get Started</button>
-    <small>Because love should be easy to understand.</small>
-  </section>`;
-}
-
-function choices(selected,prefix){
- return Object.entries(profiles).map(([k,v])=>`<button class="choice ${selected===k?"selected":""}" data-style="${prefix}:${k}"><span>${v.emoji}</span><b>${v.label}</b><i>${selected===k?"✓":""}</i></button>`).join("");
-}
-
-function setup(){
- return `<section class="phone setup"><button class="back" data-go="welcome">‹</button>${logo()}
- <h2>How do you each like to communicate?</h2><p class="sub">We'll tailor the translation to your styles.</p>
- <div class="profile blue"><h3>🧔 Your Style</h3>${choices(state.me.style,"me")}</div>
- <div class="profile pink"><h3>👩 Your Spouse's Style</h3>${choices(state.spouse.style,"spouse")}</div>
- <label class="humor">Parody dial <span id="humorLabel">${["Gentle","Playful","Extra","Unnecessarily Dramatic"][state.humor]}</span><input id="humor" type="range" min="0" max="3" value="${state.humor}"></label>
- <button class="primary" data-go="chat">Save & Start Chatting</button></section>`;
-}
-
-function message(m){
- return `<article class="message ${m.sender==="me"?"mine":"theirs"}">
- <div class="original"><small>${m.sender==="me"?"You":"Your spouse"} actually said</small><p>${escapeHtml(m.original)}</p></div>
- <div class="translated"><small>✨ Translated for ${m.sender==="me"?"your spouse":"you"} ✨</small><p>${escapeHtml(m.translated)}</p></div>
- </article>`;
-}
-
-function chat(){
- const msgs=state.messages.length?state.messages.map(message).join(""):`<div class="empty"><div>💬♥💬</div><h3>Ready for translation duty.</h3><p>Try the tea story demo, or write your own message.</p><button class="secondary" id="demo">Load the tea incident</button></div>`;
- return `<section class="phone chat"><header><button class="back" data-go="setup">‹</button><div><b>Spouse Speak</b><small>● Translation services online</small></div><button class="icon" id="swap" title="Swap viewpoint">⇄</button></header>
- <div class="messages" id="messages">${msgs}</div>
- <form id="composer"><textarea id="input" rows="1" placeholder="Type what you actually mean…"></textarea><button aria-label="Translate and send">➤</button></form>
- <p class="disclaimer">Spouse Speak changes style, not facts. For actual mind-reading, please consult your spouse.</p></section>`;
-}
-
-function translating(text,sender){
- app.innerHTML=`<section class="phone translating"><button class="close" id="cancel">×</button><h2>Translating…</h2><p>Turning “${escapeHtml(text.slice(0,48))}${text.length>48?"…":""}” into something they'll love.</p><div class="magic">💬 <span>♥</span> 💬</div><ul><li>Preserving important facts…</li><li>Adjusting emotional bandwidth…</li><li>Checking sarcasm levels…</li><li>Adding marriage-grade context…</li></ul><div class="progress"><i></i></div></section>`;
- setTimeout(()=>{
-   const target=sender==="me"?state.spouse.style:state.me.style;
-   state.messages.push({sender,original:text,translated:translate(text,target,state.humor),at:Date.now()});
-   save(); state.screen="chat"; render();
-   setTimeout(()=>document.querySelector(".messages")?.scrollTo(0,99999),0);
- },900);
-}
-
-function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
-function render(){save(); app.innerHTML=state.screen==="welcome"?welcome():state.screen==="setup"?setup():chat(); bind();}
-
+function logo(){return '<div class="brand"><div class="mark"><span>☺</span><span>☺</span><b>♥</b></div><h1>Spouse Speak</h1><p>Same words. Happier marriages.</p></div>'}
+function welcome(){return `<section class="phone welcome">${logo()}<div class="hero-couple"><div>📱🙂</div><span>♥</span><div>😊📱</div></div><div class="pitch"><p>💗 Turns long stories into clear updates <strong>(and vice versa)</strong>.</p><p>💬 Keeps the meaning, changes the delivery.</p><p>😄 For couples who occasionally require subtitles.</p></div><button class="primary" data-go="identity">Get Started</button><small>Because love should be easy to understand.</small></section>`}
+function identity(){return `<section class="phone setup"><button class="back" data-go="welcome">‹</button>${logo()}<h2>First, who are you?</h2><p class="sub">No personality test. We promise.</p><label class="field">Your name<input id="myName" value="${esc(state.me.name==="Me"?"":state.me.name)}" placeholder="Your name"></label><label class="field">Your spouse's name<input id="spouseName" value="${esc(state.spouse.name==="My Spouse"?"":state.spouse.name)}" placeholder="Your favorite person, allegedly"></label><button class="primary" id="identityNext">Choose Communication Styles</button></section>`}
+function choices(selected,prefix){return Object.entries(profiles).map(([k,v])=>`<button class="choice ${selected===k?"selected":""}" data-style="${prefix}:${k}"><span>${v.emoji}</span><b>${v.label}</b><i>${selected===k?"✓":""}</i></button>`).join("")}
+function setup(){return `<section class="phone setup"><button class="back" data-go="identity">‹</button>${logo()}<h2>How do you each like to communicate?</h2><p class="sub">These can be changed later.</p><div class="profile blue"><h3>🙂 ${esc(state.me.name)}</h3>${choices(state.me.style,"me")}</div><div class="profile pink"><h3>💗 ${esc(state.spouse.name)}</h3>${choices(state.spouse.style,"spouse")}</div><label class="humor">Parody dial <span id="humorLabel">${["Gentle","Playful","Extra","Unnecessarily Dramatic"][state.humor]}</span><input id="humor" type="range" min="0" max="3" value="${state.humor}"></label><button class="primary" data-go="pair">Continue to Pairing</button></section>`}
+function pairing(){const p=state.pair;return `<section class="phone setup"><button class="back" data-go="setup">‹</button>${logo()}<h2>Pair with ${esc(state.spouse.name)}</h2><p class="sub">Two phones. One conversation. Consider this relationship infrastructure.</p>${p?`<div class="pair-card"><small>Your pairing code</small><strong>${p.invite}</strong><p>${p.status==="paired"?"✓ Paired and ready to translate.":"Share this code with "+esc(state.spouse.name)+". In production this will securely pair the two accounts."}</p></div><button class="primary" data-go="chat">${p.status==="paired"?"Start Chatting":"Preview Conversation"}</button>`:`<button class="primary" id="createPair">Create Our Pairing Code</button><div class="or"><span>or</span></div><label class="field">Enter their code<input id="joinCode" inputmode="numeric" maxlength="6" placeholder="6-digit code"></label><button class="secondary wide" id="joinPair">Join My Spouse</button>`}<p class="backend-note">Phase 2 preview uses local pairing storage. The interface is ready for a hosted auth/sync adapter.</p></section>`}
+function message(m){return `<article class="message ${m.sender==="me"?"mine":"theirs"}"><div class="original"><small>${m.sender==="me"?"You":esc(state.spouse.name)} actually said</small><p>${esc(m.original)}</p></div><div class="translated"><small>✨ Translated for ${m.sender==="me"?esc(state.spouse.name):"you"} ✨</small><p>${esc(m.translated)}</p></div></article>`}
+function chat(){const msgs=state.messages.length?state.messages.map(message).join(""):`<div class="empty"><div>💬♥💬</div><h3>You two are paired-ish.</h3><p>Send a message or load the tea incident.</p><button class="secondary" id="demo">Load the tea incident</button></div>`;return `<section class="phone chat"><header><button class="back" data-go="pair">‹</button><div><b>${esc(state.spouse.name)}</b><small>● ${state.pair?.status==="paired"?"Paired":"Preview mode"}</small></div><button class="icon" data-go="setup" title="Preferences">⚙</button></header><div class="messages" id="messages">${msgs}</div><form id="composer"><textarea id="input" rows="1" placeholder="Type what you actually mean…"></textarea><button aria-label="Translate and send">➤</button></form><p class="disclaimer">Spouse Speak changes style, not facts. For actual mind-reading, consult your spouse.</p></section>`}
+function translating(text,sender){root.innerHTML=`<section class="phone translating"><h2>Translating…</h2><p>Turning “${esc(text.slice(0,48))}${text.length>48?"…":""}” into something they'll understand.</p><div class="magic">💬 <span>♥</span> 💬</div><ul><li>Preserving important facts…</li><li>Adjusting emotional bandwidth…</li><li>Checking sarcasm levels…</li><li>Adding marriage-grade context…</li></ul><div class="progress"><i></i></div></section>`;setTimeout(async()=>{const target=sender==="me"?state.spouse.style:state.me.style;const m={id:crypto.randomUUID?.()||String(Date.now()),sender,original:text,translated:translate(text,target,state.humor),at:Date.now()};state.messages.push(m);if(state.pair?.invite)try{await backend.send(state.pair.invite,m)}catch{}save();state.screen="chat";render()},900)}
+function render(){save();const views={welcome,identity,setup,pair:pairing,chat};root.innerHTML=(views[state.screen]||welcome)();bind()}
 function bind(){
- document.querySelectorAll("[data-go]").forEach(el=>el.onclick=()=>{state.screen=el.dataset.go;render()});
- document.querySelectorAll("[data-style]").forEach(el=>el.onclick=()=>{const [who,style]=el.dataset.style.split(":");state[who].style=style;render()});
- const slider=document.querySelector("#humor"); if(slider) slider.oninput=e=>{state.humor=+e.target.value;save();document.querySelector("#humorLabel").textContent=["Gentle","Playful","Extra","Unnecessarily Dramatic"][state.humor]};
- const form=document.querySelector("#composer"); if(form) form.onsubmit=e=>{e.preventDefault();const input=document.querySelector("#input");if(input.value.trim()) translating(input.value.trim(),"me")};
- const demo=document.querySelector("#demo"); if(demo) demo.onclick=()=>translating("Hey! I know I said I'd be 20 minutes, but I'm going to be like an hour. Trader Joe's had hibiscus tea mixed with turmeric, which I'm allergic to, so I walked to Whole Foods. I found the tea, met a really nice lady in line, talked about yoga, and basically made a new friend. Perfect day for tea.","spouse");
- const swap=document.querySelector("#swap"); if(swap) swap.onclick=()=>{state.messages=state.messages.map(m=>({...m,sender:m.sender==="me"?"spouse":"me"}));save();render()};
+ document.querySelectorAll("[data-go]").forEach(x=>x.onclick=()=>{state.screen=x.dataset.go;render()});
+ document.querySelectorAll("[data-style]").forEach(x=>x.onclick=()=>{const [who,style]=x.dataset.style.split(":");state[who].style=style;render()});
+ const next=document.querySelector("#identityNext");if(next)next.onclick=()=>{state.me.name=document.querySelector("#myName").value.trim()||"Me";state.spouse.name=document.querySelector("#spouseName").value.trim()||"My Spouse";state.screen="setup";render()};
+ const slider=document.querySelector("#humor");if(slider)slider.oninput=e=>{state.humor=+e.target.value;save();document.querySelector("#humorLabel").textContent=["Gentle","Playful","Extra","Unnecessarily Dramatic"][state.humor]};
+ const create=document.querySelector("#createPair");if(create)create.onclick=async()=>{state.pair=await backend.createPair({...state.me});save();render()};
+ const join=document.querySelector("#joinPair");if(join)join.onclick=async()=>{try{state.pair=await backend.joinPair(document.querySelector("#joinCode").value.trim(),{...state.me});state.screen="chat";save();render()}catch(e){alert(e.message)}};
+ const form=document.querySelector("#composer");if(form)form.onsubmit=e=>{e.preventDefault();const input=document.querySelector("#input");if(input.value.trim())translating(input.value.trim(),"me")};
+ const demo=document.querySelector("#demo");if(demo)demo.onclick=()=>translating("Hey! I know I said I'd be 20 minutes, but I'm going to be like an hour. Trader Joe's had hibiscus tea mixed with turmeric, which I'm allergic to, so I walked to Whole Foods. I found the tea, met a really nice lady in line, talked about yoga, and basically made a new friend. Perfect day for tea.","spouse");
 }
-render();
-if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js");
+render();if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js");
