@@ -1,0 +1,12 @@
+{
+  "name":"Spouse Speak",
+  "short_name":"Spouse Speak",
+  "description":"Same words. Happier marriages.",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#fff9f5",
+  "theme_color":"#fff9f5",
+  "icons":[
+    {"src":"./icons/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
