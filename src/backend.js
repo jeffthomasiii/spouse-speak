@@ -15,7 +15,15 @@ async function supabase(){
 }
 export const backend={
   async mode(){return (await supabase())?"realtime":"local-demo"},
-  async signIn(email){const s=await supabase();if(!s)return {local:true};return s.auth.signInWithOtp({email,options:{emailRedirectTo:location.href.split("?")[0]}})},
+  async signIn(email){
+    const s=await supabase();if(!s)return {local:true};
+    const redirectTo=location.origin+location.pathname;
+    const {data,error}=await s.auth.signInWithOtp({email,options:{emailRedirectTo:redirectTo}});
+    if(error)throw error;return data;
+  },
+  async session(){const s=await supabase();if(!s)return null;return (await s.auth.getSession()).data.session},
+  async signOut(){const s=await supabase();if(s)await s.auth.signOut()},
+  async onAuthChange(callback){const s=await supabase();if(!s)return()=>{};const {data}=s.auth.onAuthStateChange((event,session)=>callback(event,session));return()=>data.subscription.unsubscribe()},
   async user(){const s=await supabase();if(!s)return null;return (await s.auth.getUser()).data.user},
   async createPair(owner){
     const s=await supabase();
