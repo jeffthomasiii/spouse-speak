@@ -65,3 +65,19 @@ The database schema uses authenticated users and row-level security. Only member
 Realtime subscriptions update the chat when the paired spouse inserts a message. The app also supports a server-side translateEndpoint. If no endpoint is configured or it is unavailable, Spouse Speak falls back to the built-in parody translator.
 
 **Never put a Supabase service_role key or AI provider API key in config.js.** AI credentials belong behind the server-side translation endpoint.
+
+
+## Phase 4: connected sign-in and pairing
+
+When Supabase configuration is present, Spouse Speak switches from Demo mode to Connected mode. Each spouse signs in independently using a passwordless email magic link before creating or joining a six-digit couple code.
+
+### Supabase dashboard setup
+
+1. Create a free Supabase project.
+2. Run `supabase/schema.sql` in the SQL Editor.
+3. In the project Connect dialog, copy the project URL and **publishable key** into a local `config.js` based on `config.example.js`. Do not use a secret/service-role key in the PWA.
+4. Under Authentication URL Configuration, set the Site URL to the deployed Spouse Speak URL and add `https://jeffthomasiii.github.io/spouse-speak/` as an allowed Redirect URL.
+5. Ensure email authentication is enabled.
+6. Deploy `config.js` with the static site. The publishable key is designed for public clients; the database is protected by the RLS policies in `supabase/schema.sql`.
+
+The two spouses should use different email accounts. After both are authenticated, one creates the pairing code and the other joins it.
