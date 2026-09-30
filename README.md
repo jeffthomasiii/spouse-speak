@@ -54,3 +54,14 @@ The backend contract is isolated in src/backend.js. Production work should repla
 - Keep AI/provider credentials server-side.
 - Enforce authorization so only the paired couple can read its conversation.
 - Support push notification subscriptions without exposing message data unnecessarily.
+
+
+## Phase 3: real two-device backend
+
+Phase 3 adds an optional Supabase adapter while preserving the local demo fallback. Create a Supabase project, run supabase/schema.sql in its SQL editor, copy config.example.js to config.js, and provide the project URL and browser-safe publishable key.
+
+The database schema uses authenticated users and row-level security. Only members of a couple can select that couple's messages, and message inserts must come from an authenticated member.
+
+Realtime subscriptions update the chat when the paired spouse inserts a message. The app also supports a server-side translateEndpoint. If no endpoint is configured or it is unavailable, Spouse Speak falls back to the built-in parody translator.
+
+**Never put a Supabase service_role key or AI provider API key in config.js.** AI credentials belong behind the server-side translation endpoint.
