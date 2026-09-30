@@ -1,8 +1,7 @@
-// Copy this file to config.js for local/private configuration.
-// The Supabase URL and publishable/anon key are safe to use in a browser when RLS is configured.
-// NEVER put a service_role key or an AI provider secret here.
-export const CONFIG = {
-  supabaseUrl: "",
-  supabaseKey: "",
-  translateEndpoint: ""
+// Copy this file to config.js when connecting the free realtime backend.
+// These browser credentials identify the Supabase project; database access is enforced by RLS.
+// Never put a service_role key here.
+export const CONFIG={
+  supabaseUrl:"",
+  supabaseKey:""
 };
