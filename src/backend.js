@@ -2,7 +2,7 @@ const LOCAL_KEY="spouse-speak-pairings";
 let client=null, channel=null;
 
 async function config(){
-  try{return (await import("../config.js")).CONFIG}catch{return {supabaseUrl:"",supabaseKey:"",translateEndpoint:""}}
+  try{return (await import("../config.js")).CONFIG}catch{return {supabaseUrl:"",supabaseKey:""}}
 }
 function localDb(){return JSON.parse(localStorage.getItem(LOCAL_KEY)||"{}")}
 function localPut(d){localStorage.setItem(LOCAL_KEY,JSON.stringify(d))}
