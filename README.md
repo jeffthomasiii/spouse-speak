@@ -37,3 +37,20 @@ Phase 1 intentionally uses plain HTML, CSS, and JavaScript. This keeps the PWA d
 Phase 2 will focus on real couple pairing, authentication/data sync, a production translation service, message safety and meaning preservation, notifications, and a richer preference model.
 
 > Spouse Speak is a parody communication tool, not relationship counseling, emergency communication, or evidence that your spouse can actually read your mind.
+
+
+## Phase 2 pairing preview
+
+Phase 2 introduces named spouse profiles and a six-digit pairing workflow. The current GitHub Pages implementation uses a local demo adapter so the UX and domain model can be tested without pretending that static hosting provides realtime cross-device messaging.
+
+The backend contract is isolated in src/backend.js. Production work should replace that adapter with authenticated hosted storage while keeping the UI contract stable.
+
+### Production backend responsibilities
+
+- Authenticate each spouse as a distinct user.
+- Redeem pairing codes exactly once and bind two users to a couple.
+- Store original messages and recipient-specific translations.
+- Synchronize conversations in realtime across devices.
+- Keep AI/provider credentials server-side.
+- Enforce authorization so only the paired couple can read its conversation.
+- Support push notification subscriptions without exposing message data unnecessarily.
